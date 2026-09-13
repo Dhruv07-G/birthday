@@ -263,6 +263,7 @@
     box-shadow: 0 6px 0 #a396dd;
     cursor:default;
     animation: none;
+    opacity: 1;
   }
 
   @keyframes pulseGlow{
@@ -452,11 +453,15 @@
 
   .star-rating{
     display:flex;
-    gap: 10px;
+    gap: clamp(2px, 1.5vw, 10px);
+    flex-wrap: wrap;
     justify-content:center;
     margin: 10px 0 6px;
   }
   .star{
+    background: none;
+    border: 0;
+    padding: 0;
     font-size: 2.4rem;
     color: #e3d5f0;
     cursor: pointer;
@@ -676,7 +681,7 @@
     <p class="after-wish" id="afterWish">Wish made — happy birthday, Gauri! 🎉</p>
   </div>
 
-  <audio id="bgMusic" src="birthday-song.mp3" loop></audio>
+  <audio id="bgMusic" src="birthday-%20song.mp3" preload="metadata" loop></audio>
   <button class="mute-btn" id="muteBtn" title="Mute music" style="display:none;">🔊</button>
 
   <div class="page" id="qaPage" style="display:none;">
@@ -769,6 +774,53 @@
   const music = document.getElementById('bgMusic');
   const muteBtn = document.getElementById('muteBtn');
 
+  // Use a self-contained birthday melody if the uploaded MP3 is empty or invalid.
+  let usedFallback = false;
+  music.addEventListener('error', () => {
+    if(usedFallback) return;
+    usedFallback = true;
+    const notes = [[67,.3],[67,.3],[69,.6],[67,.6],[72,.6],[71,1.2],
+      [67,.3],[67,.3],[69,.6],[67,.6],[74,.6],[72,1.2],
+      [67,.3],[67,.3],[79,.6],[76,.6],[72,.6],[71,.6],[69,1.2],
+      [77,.3],[77,.3],[76,.6],[72,.6],[74,.6],[72,1.5]];
+    const rate = 16000;
+    const count = Math.ceil(notes.reduce((sum,n) => sum + n[1], 0) * rate);
+    const buffer = new ArrayBuffer(44 + count * 2);
+    const view = new DataView(buffer);
+    const write = (offset, text) => [...text].forEach((c,i) => view.setUint8(offset+i,c.charCodeAt(0)));
+    write(0,'RIFF'); view.setUint32(4,36+count*2,true); write(8,'WAVE');
+    write(12,'fmt '); view.setUint32(16,16,true); view.setUint16(20,1,true);
+    view.setUint16(22,1,true); view.setUint32(24,rate,true); view.setUint32(28,rate*2,true);
+    view.setUint16(32,2,true); view.setUint16(34,16,true); write(36,'data'); view.setUint32(40,count*2,true);
+    let offset = 0;
+    notes.forEach(([note,duration]) => {
+      const length = Math.floor(duration * rate);
+      const frequency = 440 * Math.pow(2,(note-69)/12);
+      for(let i=0;i<length;i++){
+        const t = i/rate;
+        const envelope = Math.min(1,t/.015) * Math.max(0,1-t/(duration*.9));
+        const sample = Math.sin(2*Math.PI*frequency*t) * envelope * .35;
+        view.setInt16(44+(offset+i)*2, sample*32767, true);
+      }
+      offset += length;
+    });
+    music.src = URL.createObjectURL(new Blob([buffer], {type:'audio/wav'}));
+    music.load();
+    if(btn.disabled) playMusic();
+  });
+
+  function updateMusicButton(){
+    const paused = music.paused;
+    muteBtn.textContent = paused ? '▶️' : (music.muted ? '🔇' : '🔊');
+    muteBtn.title = paused ? 'Play music' : (music.muted ? 'Unmute music' : 'Mute music');
+    muteBtn.setAttribute('aria-label', muteBtn.title);
+  }
+  function playMusic(){
+    if(music.error && !usedFallback) music.load();
+    music.play().then(updateMusicButton).catch(updateMusicButton);
+  }
+  ['play', 'pause', 'volumechange', 'error'].forEach(event => music.addEventListener(event, updateMusicButton));
+
   btn.addEventListener('click', () => {
     flame.classList.add('out');
     burst();
@@ -777,9 +829,7 @@
     btn.textContent = "Wish made 🎉";
 
     music.volume = 0.7;
-    music.play().catch(() => {
-      // Autoplay was blocked for some reason; the mute/play button still lets her start it manually.
-    });
+    playMusic();
     muteBtn.style.display = 'block';
 
     setTimeout(() => {
@@ -791,24 +841,24 @@
   });
 
   muteBtn.addEventListener('click', () => {
-    if(music.muted){
+    if(music.paused){
       music.muted = false;
-      muteBtn.textContent = '🔊';
+      playMusic();
     } else {
-      music.muted = true;
-      muteBtn.textContent = '🔇';
+      music.muted = !music.muted;
     }
+    updateMusicButton();
   });
 
   const questions = [
-    { id: 'q1', label: "1. How does it feel to be this age now?", type: 'text' },
+    { id: 'q1', label: "1. Which level are you now? (Age)", type: 'text' },
     { id: 'q2', label: "2. How are you feeling turning this age?", type: 'text' },
     { id: 'q3', label: "3. Does turning this age mean you've become more mature?", type: 'text' },
     { id: 'q4', label: "4. How would you describe your birthday celebration?", type: 'textarea' },
     { id: 'q5', label: "5. Do you think things change after turning this age?", type: 'text' },
     { id: 'q6', label: "6. What do you want in life? (just a question)", type: 'textarea' },
     { id: 'q7', label: "7. Why do we celebrate birthdays?", type: 'textarea' },
-    { id: 'q8', label: "8. If your best friend is with you this birthday but will move abroad for higher studies after this — will you still celebrate your birthday next year without her? (just a general question)", type: 'textarea' },
+    { id: 'q8', label: "8. Is it possible to celebrate a birthday alone? Justify your answer.", type: 'textarea' },
     { id: 'q9', label: "9. What is your birthday date and year?", type: 'text' },
     { id: 'q10', label: "10. Do you prefer celebrating your birthday with friends or family?", type: 'text' },
     { id: 'hurt', label: "Will it hurt you to give answers to these questions?", type: 'yesno' },
@@ -828,7 +878,7 @@
   function starsHtml(max, selected){
     let html = `<div class="star-rating" id="starRating" data-rating="${selected || 0}">`;
     for(let i = 1; i <= max; i++){
-      html += `<span class="star${i <= selected ? ' filled' : ''}" data-value="${i}">★</span>`;
+      html += `<button type="button" aria-label="${i} of ${max} stars" class="star${i <= selected ? ' filled' : ''}" data-value="${i}">★</button>`;
     }
     html += `</div>`;
     return html;
@@ -846,16 +896,18 @@
     const savedValue = answers[q.id] || '';
     let fieldHtml;
     if(q.type === 'textarea'){
-      fieldHtml = `<textarea id="fieldInput" rows="3">${savedValue}</textarea>`;
+      fieldHtml = `<textarea id="fieldInput" rows="3"></textarea>`;
     } else if(q.type === 'stars'){
       fieldHtml = starsHtml(q.max, Number(savedValue) || 0);
     } else if(q.type === 'yesno'){
       fieldHtml = yesNoHtml(savedValue);
     } else {
-      fieldHtml = `<input type="text" id="fieldInput" value="${savedValue}">`;
+      fieldHtml = `<input type="text" id="fieldInput" value="">`;
     }
 
-    qaCard.innerHTML = `<label>${q.label}</label>${fieldHtml}<p class="qa-error" id="qaError">Please answer before continuing 🙂</p>`;
+    qaCard.innerHTML = `<label for="fieldInput">${q.label}</label>${fieldHtml}<p class="qa-error" id="qaError">Please answer before continuing 🙂</p>`;
+    const field = document.getElementById('fieldInput');
+    if(field) field.value = savedValue;
     qaCard.classList.remove('animate');
     void qaCard.offsetWidth;
     qaCard.classList.add('animate');
@@ -966,8 +1018,9 @@
       qaCard.innerHTML = `<div class="qa-thanks">
         <p>Hmm, something went wrong sending this automatically.</p>
         <p style="font-size:0.95rem; font-weight:500; color:#5a4570; margin-top:10px;">No worries — just copy this and send it another way:</p>
-        <textarea readonly style="width:100%; margin-top:12px; padding:12px; border-radius:12px; border:2px solid #e8dbf3; font-family:'Plus Jakarta Sans', sans-serif; font-size:0.9rem;" rows="8">${fullMessage}</textarea>
+        <textarea readonly style="width:100%; margin-top:12px; padding:12px; border-radius:12px; border:2px solid #e8dbf3; font-family:'Plus Jakarta Sans', sans-serif; font-size:0.9rem;" rows="8"></textarea>
       </div>`;
+      qaCard.querySelector('textarea').value = fullMessage;
     });
   }
 
