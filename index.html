@@ -646,6 +646,164 @@
       height: 52px;
     }
   }
+
+  /* ---- mini games ---- */
+  .gm-tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:24px;
+    background:rgba(255,255,255,0.7);
+    padding:6px;
+    border-radius:999px;
+  }
+  .gm-tab{
+    flex:1;
+    border:none;
+    background:transparent;
+    padding:11px 12px;
+    border-radius:999px;
+    font-family:'Fredoka', sans-serif;
+    font-weight:600;
+    font-size:0.9rem;
+    color:var(--ink);
+    cursor:pointer;
+    transition:background .2s ease, color .2s ease;
+  }
+  .gm-tab.active{
+    background:linear-gradient(135deg, var(--coral), var(--grape));
+    color:var(--cream);
+    box-shadow:0 6px 16px rgba(139,92,246,0.3);
+  }
+  .gm-game{ display:none; }
+  .gm-game.active{ display:block; }
+
+  .gm-stat-row{
+    display:flex;
+    justify-content:space-between;
+    font-family:'Fredoka', sans-serif;
+    font-weight:600;
+    margin-bottom:16px;
+    font-size:0.95rem;
+    color:var(--ink);
+  }
+  .gm-stat-row span.value{ color: var(--coral); }
+
+  .gm-memory-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:9px;
+  }
+  .gm-card{
+    aspect-ratio:1/1;
+    border-radius:14px;
+    cursor:pointer;
+    user-select:none;
+    position:relative;
+  }
+  .gm-card .gm-face{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:14px;
+    font-size:1.6rem;
+    transition:opacity .15s ease;
+  }
+  .gm-card .gm-front{
+    background:linear-gradient(135deg, var(--grape), var(--coral));
+  }
+  .gm-card .gm-back{
+    background:rgba(255,255,255,0.9);
+    border:2px solid var(--sun);
+    opacity:0;
+  }
+  .gm-card.flipped .gm-front{ opacity:0; }
+  .gm-card.flipped .gm-back{ opacity:1; }
+  .gm-card.matched .gm-back{
+    border-color:var(--teal);
+    background:rgba(34,211,197,0.12);
+  }
+
+  .gm-win-msg{
+    text-align:center;
+    font-family:'Fredoka', sans-serif;
+    font-weight:600;
+    color:var(--coral);
+    margin-top:14px;
+    min-height:1.4em;
+  }
+
+  .gm-btn{
+    font-family:'Fredoka', sans-serif;
+    font-weight:600;
+    border:none;
+    background:linear-gradient(135deg, var(--coral), var(--grape));
+    color:var(--cream);
+    padding:13px 24px;
+    border-radius:999px;
+    cursor:pointer;
+    font-size:0.98rem;
+    margin-top:16px;
+    box-shadow:0 8px 20px rgba(139,92,246,0.3);
+    transition:transform 0.12s ease;
+    display:inline-block;
+    text-decoration:none;
+    text-align:center;
+  }
+  .gm-btn:active{ transform:translateY(3px); }
+  .gm-btn.secondary{
+    background:rgba(139,92,246,0.12);
+    color:var(--grape);
+    box-shadow:none;
+  }
+  .gm-btn:disabled{
+    opacity:0.7;
+    cursor:default;
+  }
+
+  .gm-catch-wrap{
+    position:relative;
+    width:100%;
+    height:360px;
+    background:linear-gradient(180deg, #FFF0E5, #FFE3EC);
+    border-radius:18px;
+    overflow:hidden;
+    touch-action:none;
+  }
+  .gm-falling{
+    position:absolute;
+    font-size:1.7rem;
+    cursor:pointer;
+    user-select:none;
+  }
+  .gm-catch-overlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,248,240,0.94);
+    text-align:center;
+    gap:10px;
+    padding:20px;
+  }
+  .gm-catch-overlay h3{
+    margin:0;
+    font-family:'Fredoka', sans-serif;
+    font-weight:600;
+    font-size:1.2rem;
+    color:var(--ink);
+  }
+  .gm-catch-overlay p{
+    margin:0;
+    max-width:280px;
+    font-size:0.9rem;
+    color:#6a5a80;
+  }
+
+  #gamesPage .qa-title{ margin-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -699,6 +857,49 @@
       <div class="qa-nav">
         <button class="nav-btn back hidden" id="backBtn">Back</button>
         <button class="nav-btn next" id="nextBtn">Next</button>
+      </div>
+    </section>
+
+    <footer>made with love, just for you</footer>
+  </div>
+
+  <div class="page" id="gamesPage" style="display:none;">
+    <section class="qa-section">
+      <p class="qa-title">One more thing… 🎮</p>
+      <p class="qa-subtitle">Two little games, just for you.</p>
+
+      <div class="gm-tabs">
+        <button class="gm-tab active" id="gmTabMemory" type="button">🧠 Memory Match</button>
+        <button class="gm-tab" id="gmTabCatch" type="button">💖 Catch the Hearts</button>
+      </div>
+
+      <div class="gm-game active" id="gmMemory">
+        <div class="gm-stat-row">
+          <div>Moves: <span class="value" id="gmMoveCount">0</span></div>
+          <div>Matches: <span class="value" id="gmMatchCount">0</span> / 8</div>
+        </div>
+        <div class="gm-memory-grid" id="gmMemoryGrid"></div>
+        <div class="gm-win-msg" id="gmMemoryWin"></div>
+        <div id="gmMemoryEmailWrap" style="display:none; text-align:center;">
+          <button class="gm-btn" id="gmMemoryEmailBtn" type="button">Email my score 💌</button>
+        </div>
+        <div style="text-align:center;">
+          <button class="gm-btn secondary" id="gmMemoryReset" type="button">Shuffle & Restart</button>
+        </div>
+      </div>
+
+      <div class="gm-game" id="gmCatch">
+        <div class="gm-stat-row">
+          <div>Score: <span class="value" id="gmCatchScore">0</span></div>
+          <div>Time: <span class="value" id="gmCatchTime">30</span>s</div>
+        </div>
+        <div class="gm-catch-wrap" id="gmCatchWrap">
+          <div class="gm-catch-overlay" id="gmCatchStartOverlay">
+            <h3>Catch as many hearts as you can!</h3>
+            <p>Tap the falling hearts before they hit the ground. Watch out for the decoy balloons 🎈</p>
+            <button class="gm-btn" id="gmCatchStartBtn" type="button">Start (30s)</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1009,7 +1210,11 @@
     })
     .then(res => {
       if(res.ok){
-        qaCard.innerHTML = `<div class="qa-thanks"><p>Thanks, Gauri! Your answers are on their way. 🎉</p></div>`;
+        qaCard.innerHTML = `<div class="qa-thanks">
+          <p>Thanks, Gauri! Your answers are on their way. 🎉</p>
+          <button class="gm-btn" id="goToGamesBtn" type="button" style="margin-top:18px;">Play a couple of games 🎮</button>
+        </div>`;
+        document.getElementById('goToGamesBtn').addEventListener('click', showGamesPage);
       } else {
         throw new Error('Formspree error');
       }
@@ -1019,8 +1224,10 @@
         <p>Hmm, something went wrong sending this automatically.</p>
         <p style="font-size:0.95rem; font-weight:500; color:#5a4570; margin-top:10px;">No worries — just copy this and send it another way:</p>
         <textarea readonly style="width:100%; margin-top:12px; padding:12px; border-radius:12px; border:2px solid #e8dbf3; font-family:'Plus Jakarta Sans', sans-serif; font-size:0.9rem;" rows="8"></textarea>
+        <button class="gm-btn" id="goToGamesBtn" type="button" style="margin-top:18px;">Play a couple of games 🎮</button>
       </div>`;
       qaCard.querySelector('textarea').value = fullMessage;
+      document.getElementById('goToGamesBtn').addEventListener('click', showGamesPage);
     });
   }
 
@@ -1047,6 +1254,245 @@
   });
 
   renderStep();
+
+  /* =============== GAMES PAGE =============== */
+  function showGamesPage(){
+    document.getElementById('qaPage').style.display = 'none';
+    document.getElementById('gamesPage').style.display = 'flex';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  const gmTabMemory = document.getElementById('gmTabMemory');
+  const gmTabCatch = document.getElementById('gmTabCatch');
+  const gmMemory = document.getElementById('gmMemory');
+  const gmCatch = document.getElementById('gmCatch');
+
+  gmTabMemory.addEventListener('click', () => {
+    gmTabMemory.classList.add('active');
+    gmTabCatch.classList.remove('active');
+    gmMemory.classList.add('active');
+    gmCatch.classList.remove('active');
+  });
+  gmTabCatch.addEventListener('click', () => {
+    gmTabCatch.classList.add('active');
+    gmTabMemory.classList.remove('active');
+    gmCatch.classList.add('active');
+    gmMemory.classList.remove('active');
+  });
+
+  function sendScoreToFormspree(subject, message, feedbackBtn, defaultLabel){
+    feedbackBtn.disabled = true;
+    feedbackBtn.textContent = 'Sending... 💌';
+    fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ subject, message })
+    })
+    .then(res => {
+      if(res.ok){
+        feedbackBtn.textContent = 'Sent! 💌';
+      } else {
+        throw new Error('Formspree error');
+      }
+    })
+    .catch(() => {
+      feedbackBtn.disabled = false;
+      feedbackBtn.textContent = 'Couldn\'t send — tap to retry';
+    });
+  }
+
+  /* ---- Memory Match ---- */
+  const gmEmojis = ['🎂','🎁','🎈','🎉','🌸','⭐','🍰','🎀'];
+  let gmState = { first:null, second:null, lock:false, moves:0, matches:0 };
+  const gmGrid = document.getElementById('gmMemoryGrid');
+  const gmMoveCountEl = document.getElementById('gmMoveCount');
+  const gmMatchCountEl = document.getElementById('gmMatchCount');
+  const gmMemoryWinEl = document.getElementById('gmMemoryWin');
+  const gmMemoryEmailWrap = document.getElementById('gmMemoryEmailWrap');
+  const gmMemoryEmailBtn = document.getElementById('gmMemoryEmailBtn');
+
+  function gmShuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  function gmBuildGrid(){
+    gmGrid.innerHTML = '';
+    gmState = { first:null, second:null, lock:false, moves:0, matches:0 };
+    gmMoveCountEl.textContent = 0;
+    gmMatchCountEl.textContent = 0;
+    gmMemoryWinEl.textContent = '';
+    gmMemoryEmailWrap.style.display = 'none';
+
+    const deck = gmShuffle([...gmEmojis, ...gmEmojis]);
+    deck.forEach((emoji) => {
+      const card = document.createElement('div');
+      card.className = 'gm-card';
+      card.dataset.emoji = emoji;
+      card.innerHTML = `<div class="gm-face gm-front"></div><div class="gm-face gm-back">${emoji}</div>`;
+      card.addEventListener('click', () => gmOnCardClick(card));
+      gmGrid.appendChild(card);
+    });
+  }
+
+  function gmOnCardClick(card){
+    if(gmState.lock) return;
+    if(card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+    card.classList.add('flipped');
+
+    if(!gmState.first){
+      gmState.first = card;
+      return;
+    }
+
+    gmState.second = card;
+    gmState.lock = true;
+    gmState.moves++;
+    gmMoveCountEl.textContent = gmState.moves;
+
+    const isMatch = gmState.first.dataset.emoji === gmState.second.dataset.emoji;
+
+    if(isMatch){
+      gmState.first.classList.add('matched');
+      gmState.second.classList.add('matched');
+      gmState.matches++;
+      gmMatchCountEl.textContent = gmState.matches;
+      gmResetTurn();
+      if(gmState.matches === gmEmojis.length){
+        gmMemoryWinEl.textContent = `You matched them all in ${gmState.moves} moves! 🎉`;
+        gmMemoryEmailBtn.disabled = false;
+        gmMemoryEmailBtn.textContent = 'Email my score 💌';
+        gmMemoryEmailWrap.style.display = 'block';
+      }
+    } else {
+      setTimeout(() => {
+        gmState.first.classList.remove('flipped');
+        gmState.second.classList.remove('flipped');
+        gmResetTurn();
+      }, 700);
+    }
+  }
+
+  function gmResetTurn(){
+    gmState.first = null;
+    gmState.second = null;
+    gmState.lock = false;
+  }
+
+  document.getElementById('gmMemoryReset').addEventListener('click', gmBuildGrid);
+  gmMemoryEmailBtn.addEventListener('click', () => {
+    sendScoreToFormspree(
+      "Gauri's Memory Match score! 🎂",
+      `Gauri just finished Memory Match in ${gmState.moves} moves! 🎉`,
+      gmMemoryEmailBtn
+    );
+  });
+  gmBuildGrid();
+
+  /* ---- Catch the Hearts ---- */
+  const gmCatchWrap = document.getElementById('gmCatchWrap');
+  const gmCatchScoreEl = document.getElementById('gmCatchScore');
+  const gmCatchTimeEl = document.getElementById('gmCatchTime');
+  const gmCatchStartOverlay = document.getElementById('gmCatchStartOverlay');
+  const gmCatchStartBtn = document.getElementById('gmCatchStartBtn');
+
+  const gmGoodItems = ['💖','💛','💕','🩷'];
+  const gmBadItem = '🎈';
+  let gmCatchRunning = false;
+  let gmCatchScore = 0;
+  let gmCatchTimeLeft = 30;
+  let gmSpawnTimer = null;
+  let gmCountdownTimer = null;
+
+  function gmSpawnItem(){
+    if(!gmCatchRunning) return;
+    const isBad = Math.random() < 0.22;
+    const el = document.createElement('div');
+    el.className = 'gm-falling';
+    el.textContent = isBad ? gmBadItem : gmGoodItems[Math.floor(Math.random()*gmGoodItems.length)];
+    const wrapWidth = gmCatchWrap.clientWidth;
+    const startX = Math.random() * Math.max(1, wrapWidth - 30);
+    el.style.left = startX + 'px';
+    el.style.top = '-28px';
+    gmCatchWrap.appendChild(el);
+
+    const duration = 2400 + Math.random()*1300;
+    const start = performance.now();
+    const endTop = gmCatchWrap.clientHeight - 20;
+
+    function fall(now){
+      if(!gmCatchRunning){ el.remove(); return; }
+      const t = Math.min((now-start)/duration, 1);
+      el.style.top = (t * endTop - 28) + 'px';
+      if(t < 1){
+        requestAnimationFrame(fall);
+      } else {
+        el.remove();
+      }
+    }
+    requestAnimationFrame(fall);
+
+    el.addEventListener('pointerdown', () => {
+      if(!gmCatchRunning) return;
+      if(isBad){
+        gmCatchScore = Math.max(0, gmCatchScore - 2);
+      } else {
+        gmCatchScore += 1;
+      }
+      gmCatchScoreEl.textContent = gmCatchScore;
+      el.style.transform = 'scale(1.6)';
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 120);
+    });
+  }
+
+  function gmStartCatchGame(){
+    gmCatchRunning = true;
+    gmCatchScore = 0;
+    gmCatchTimeLeft = 30;
+    gmCatchScoreEl.textContent = 0;
+    gmCatchTimeEl.textContent = gmCatchTimeLeft;
+    gmCatchStartOverlay.style.display = 'none';
+
+    gmSpawnTimer = setInterval(gmSpawnItem, 550);
+    gmCountdownTimer = setInterval(() => {
+      gmCatchTimeLeft--;
+      gmCatchTimeEl.textContent = gmCatchTimeLeft;
+      if(gmCatchTimeLeft <= 0){
+        gmEndCatchGame();
+      }
+    }, 1000);
+  }
+
+  function gmEndCatchGame(){
+    gmCatchRunning = false;
+    clearInterval(gmSpawnTimer);
+    clearInterval(gmCountdownTimer);
+    gmCatchWrap.querySelectorAll('.gm-falling').forEach(el => el.remove());
+
+    const finalScore = gmCatchScore;
+    gmCatchStartOverlay.style.display = 'flex';
+    gmCatchStartOverlay.innerHTML = `
+      <h3>Time's up! Final score: ${finalScore} 💖</h3>
+      <p>${finalScore >= 15 ? "Wow, that's a birthday-champion score!" : "Nice! Give it another go?"}</p>
+      <button class="gm-btn" id="gmCatchEmailBtn" type="button">Email my score 💌</button>
+      <button class="gm-btn secondary" id="gmCatchAgainBtn" type="button">Play Again</button>
+    `;
+    document.getElementById('gmCatchAgainBtn').addEventListener('click', gmStartCatchGame);
+    document.getElementById('gmCatchEmailBtn').addEventListener('click', (e) => {
+      sendScoreToFormspree(
+        "Gauri's Catch the Hearts score! 💖",
+        `Gauri just scored ${finalScore} points in Catch the Hearts! 🎉`,
+        e.target
+      );
+    });
+  }
+
+  gmCatchStartBtn.addEventListener('click', gmStartCatchGame);
 </script>
 </body>
 </html>
